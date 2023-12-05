@@ -36,8 +36,8 @@ int main(void)
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    const int screenWidth = 800;
-    const int screenHeight = 450;
+    const int screenWidth = 640;
+    const int screenHeight = 480;
 
     InitWindow(screenWidth, screenHeight, "raylib [textures] example - bunnymark");
 
