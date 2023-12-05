@@ -60,4 +60,4 @@ _LoadFont(ptr, "path/to/font.png");
 
 ## Memory management
 Every malloc should be paired with a free. If you are allocating memory for a return value, you should free it after you are done with it.
-Curious how to tie the lifetimes of the c allocations to the JS objects as we do not have any finalizers or destrcutors in JS.
+Once finalizers are implemented we can design some better memory lifetimes and access patterns wrapped up in a higher level API.
