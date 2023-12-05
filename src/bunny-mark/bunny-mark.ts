@@ -23,7 +23,7 @@
   const BLACK = mem.alloc(_sizeof_Color); set_Color_r(BLACK, 0); set_Color_g(BLACK, 0); set_Color_b(BLACK, 0); set_Color_a(BLACK, 255);
   const GREEN = mem.alloc(_sizeof_Color); set_Color_r(GREEN, 0); set_Color_g(GREEN, 255); set_Color_b(GREEN, 0); set_Color_a(GREEN, 255);
   const MAROON = mem.alloc(_sizeof_Color); set_Color_r(MAROON, 190); set_Color_g(MAROON, 33); set_Color_b(MAROON, 55); set_Color_a(MAROON, 255);
-  const MAX_BUNNIES = 50000;
+  const MAX_BUNNIES = 100000;
   const MAX_BATCH_ELEMENTS = 8192;
 
   // Bunny buffers
@@ -62,7 +62,7 @@
   wabbitDim.w = get_Texture_width(wabbitTexture);
   wabbitDim.h = get_Texture_height(wabbitTexture);
   
-  _SetTargetFPS(60);
+  _SetTargetFPS(144);
 
   while (!_WindowShouldClose())
   {

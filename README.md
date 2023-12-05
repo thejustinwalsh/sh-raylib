@@ -8,7 +8,7 @@ brew install cmake git ninja python3 castxml
 
 ## Building
 ```sh
-cmake -B ./build -G Ninja
+cmake -B ./build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build ./build
 ```
 
@@ -18,6 +18,14 @@ cmake --build ./build
 ./build/bin/bunny-mark
 ```
 
+## Static Hermes vs Pure C
+```sh
+cd ./build/bin
+./bunny-mark
+./bunny-mark-c
+```
+`bunny-mark-c` is the original bunny-mark example from raylib.
+`bunny-mark` is the same example, ported to typescript and slightly modified to compiled with shermes.
 
 # Notes
 
