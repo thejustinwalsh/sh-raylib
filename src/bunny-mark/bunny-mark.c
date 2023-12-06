@@ -53,28 +53,25 @@ int main(void)
     SetTargetFPS(144);               // Set our game to run at 60 frames-per-second
     //--------------------------------------------------------------------------------------
 
+    for (int i = 0; i < 100000; i++)
+    {
+        if (bunniesCount < MAX_BUNNIES)
+        {
+            bunnies[bunniesCount].position.x = screenWidth/2;
+            bunnies[bunniesCount].position.y = screenHeight/2;
+            bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
+            bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
+            bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240),
+                                               GetRandomValue(80, 240),
+                                               GetRandomValue(100, 240), 255 };
+            bunniesCount++;
+        }
+    }
     // Main game loop
     while (!WindowShouldClose())    // Detect window close button or ESC key
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
-        {
-            // Create more bunnies
-            for (int i = 0; i < 100; i++)
-            {
-                if (bunniesCount < MAX_BUNNIES)
-                {
-                    bunnies[bunniesCount].position = GetMousePosition();
-                    bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240),
-                                                       GetRandomValue(80, 240),
-                                                       GetRandomValue(100, 240), 255 };
-                    bunniesCount++;
-                }
-            }
-        }
 
         // Update bunnies
         for (int i = 0; i < bunniesCount; i++)

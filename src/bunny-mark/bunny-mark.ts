@@ -64,29 +64,26 @@
   
   _SetTargetFPS(144);
 
+  // Create more bunnies
+  for (let i = 0; i < 100000; i++)
+  {
+    if (bunniesCount < MAX_BUNNIES)
+    {
+      bunnies_pos_x.push(width/2);
+      bunnies_pos_y.push(height/2);
+      bunnies_speed_x.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
+      bunnies_speed_y.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
+      bunnies_color_r.push(Math.floor(Math.random() * (240 - 50 + 1)) + 50);
+      bunnies_color_g.push(Math.floor(Math.random() * (240 - 80 + 1)) + 80);
+      bunnies_color_b.push(Math.floor(Math.random() * (240 - 100 + 1)) + 100);
+      bunnies_color_a.push(255);
+      bunniesCount++;
+    }
+  }
+
   while (!_WindowShouldClose())
   {
     // Update
-    if (_IsMouseButtonDown(_MOUSE_BUTTON_LEFT))
-    {
-        // Create more bunnies
-        for (let i = 0; i < 100; i++)
-        {
-          if (bunniesCount < MAX_BUNNIES)
-          {
-            _GetMousePosition(bunnyBridge.pos);
-            bunnies_pos_x.push(get_Vector2_x(bunnyBridge.pos));
-            bunnies_pos_y.push(get_Vector2_y(bunnyBridge.pos));
-            bunnies_speed_x.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-            bunnies_speed_y.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-            bunnies_color_r.push(Math.floor(Math.random() * (240 - 50 + 1)) + 50);
-            bunnies_color_g.push(Math.floor(Math.random() * (240 - 80 + 1)) + 80);
-            bunnies_color_b.push(Math.floor(Math.random() * (240 - 100 + 1)) + 100);
-            bunnies_color_a.push(255);
-            bunniesCount++;
-          }
-        }
-    }
 
     // Update bunnies speed and position
     for (let i = 0; i < bunniesCount; i++)
