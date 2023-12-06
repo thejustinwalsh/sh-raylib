@@ -29,6 +29,25 @@ typedef struct Bunny {
     Color color;
 } Bunny;
 
+  void createBunnies(int requested, int* bunniesCount, Bunny* bunnies)
+  {
+    int count = (*bunniesCount + requested < MAX_BUNNIES) ? requested : MAX_BUNNIES - *bunniesCount; 
+    for (int i = 0; i < count; i++)
+    {
+        if (*bunniesCount < MAX_BUNNIES)
+        {
+            bunnies[*bunniesCount].position.x = GetScreenWidth()/2;
+            bunnies[*bunniesCount].position.y = GetScreenHeight()/2;
+            bunnies[*bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
+            bunnies[*bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
+            bunnies[*bunniesCount].color = (Color){ GetRandomValue(50, 240),
+                                               GetRandomValue(80, 240),
+                                               GetRandomValue(100, 240), 255 };
+            (*bunniesCount)++;
+        }
+    }
+  }
+
 //------------------------------------------------------------------------------------
 // Program main entry point
 //------------------------------------------------------------------------------------
@@ -58,22 +77,15 @@ int main(void)
     {
         // Update
         //----------------------------------------------------------------------------------
-        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+
+        // Update Input
+        if (IsKeyPressed(KEY_SPACE))
         {
-            // Create more bunnies
-            for (int i = 0; i < 100; i++)
-            {
-                if (bunniesCount < MAX_BUNNIES)
-                {
-                    bunnies[bunniesCount].position = GetMousePosition();
-                    bunnies[bunniesCount].speed.x = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].speed.y = (float)GetRandomValue(-250, 250)/60.0f;
-                    bunnies[bunniesCount].color = (Color){ GetRandomValue(50, 240),
-                                                       GetRandomValue(80, 240),
-                                                       GetRandomValue(100, 240), 255 };
-                    bunniesCount++;
-                }
-            }
+            createBunnies(MAX_BUNNIES, &bunniesCount, bunnies);
+        }
+        else if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+        {
+            createBunnies(100, &bunniesCount, bunnies);
         }
 
         // Update bunnies

@@ -1,4 +1,5 @@
 (() => {
+  // Temp memory management helpers
   const mem = (() => {
     const pinned: c_ptr[] = [];
 
@@ -18,115 +19,133 @@
     };
   })();
 
+  /// Pack color channels into a 32-bit unsigned integer.
+  function makeColor(r: number, g: number, b: number, a: number): number {
+    "inline";
+    return (a << 24) | (b << 16) | (g << 8) | r;
+  }
+
+  // Colors
+  const RAYWHITE: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(RAYWHITE, 245); set_Color_g(RAYWHITE, 245); set_Color_b(RAYWHITE, 245); set_Color_a(RAYWHITE, 255);
+  const BLACK: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(BLACK, 0); set_Color_g(BLACK, 0); set_Color_b(BLACK, 0); set_Color_a(BLACK, 255);
+  const GREEN: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(GREEN, 0); set_Color_g(GREEN, 255); set_Color_b(GREEN, 0); set_Color_a(GREEN, 255);
+  const MAROON: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(MAROON, 190); set_Color_g(MAROON, 33); set_Color_b(MAROON, 55); set_Color_a(MAROON, 255);
+
   // Constants
-  const RAYWHITE = mem.alloc(_sizeof_Color); set_Color_r(RAYWHITE, 245); set_Color_g(RAYWHITE, 245); set_Color_b(RAYWHITE, 245); set_Color_a(RAYWHITE, 255);
-  const BLACK = mem.alloc(_sizeof_Color); set_Color_r(BLACK, 0); set_Color_g(BLACK, 0); set_Color_b(BLACK, 0); set_Color_a(BLACK, 255);
-  const GREEN = mem.alloc(_sizeof_Color); set_Color_r(GREEN, 0); set_Color_g(GREEN, 255); set_Color_b(GREEN, 0); set_Color_a(GREEN, 255);
-  const MAROON = mem.alloc(_sizeof_Color); set_Color_r(MAROON, 190); set_Color_g(MAROON, 33); set_Color_b(MAROON, 55); set_Color_a(MAROON, 255);
   const MAX_BUNNIES = 100000;
   const MAX_BATCH_ELEMENTS = 8192;
 
-  // Bunny buffers
-  let bunniesCount = 0;
-  const bunnyBridge = {
-    pos: mem.alloc(_sizeof_Vector2),
-    color: mem.alloc(_sizeof_Color),
-  };
+  class Bunny {
+    pos_x: number;
+    pos_y: number;
+    speed_x: number;
+    speed_y: number;
+    color: number;
 
-  // TODO: Unsupported ObjectTypeAnnotation
-  //const bunnies: { pos: { x: number, y: number }, speed: { x: number, y: number }, color: {r: number, g: number, b: number, a: number} }[] = [];
-
+    constructor(pos_x: number, pos_y: number, speed_x: number, speed_y: number, color: number) {
+        this.pos_x = pos_x;
+        this.pos_y = pos_y;
+        this.speed_x = speed_x;
+        this.speed_y = speed_y;
+        this.color = color;
+    }
+  }
+  
+  // Bunnies data
   // TODO: new Array(MAX_BUNNIES) causes a runtime assertion when assigning the elements of the array
-  const bunnies_pos_x: number[] = []; 
-  const bunnies_pos_y: number[] = [];
-  const bunnies_speed_x: number[] = [];
-  const bunnies_speed_y: number[] = [];
-  const bunnies_color_r: number[] = [];
-  const bunnies_color_g: number[] = [];
-  const bunnies_color_b: number[] = [];
-  const bunnies_color_a: number[] = [];
+  const bunnies: Bunny[] = [];
+  let bunniesCount = 0;
+
+  // Text data
+  const bunnyColor: c_ptr = mem.alloc(_sizeof_Color);
+  const bunnyCountText: c_ptr = mem.alloc(256);
+  const batchedDrawsText: c_ptr = mem.alloc(256);
 
   // Initialization
   const width = 640, height = 480;
   const title = mem.alloc("raylib - bunny mark");
   _InitWindow(width, height, title);
-  
-  const wabbitTexture = mem.alloc(_sizeof_Texture);
-  const wabbitTexturePath = mem.pin(get_resource_path(mem.alloc("wabbit_alpha.png")));
-  const wabbitDim = { w: 0, h: 0 };
-
-  const bunniesText = mem.alloc(256);
-  const batchedText = mem.alloc(256);
-  
-  _LoadTexture(wabbitTexture, wabbitTexturePath);
-  wabbitDim.w = get_Texture_width(wabbitTexture);
-  wabbitDim.h = get_Texture_height(wabbitTexture);
-  
   _SetTargetFPS(144);
 
+  // Load bunny texture
+  const wabbitTexture: c_ptr = mem.alloc(_sizeof_Texture);
+  const wabbitTexturePath = mem.pin(get_resource_path(mem.alloc("wabbit_alpha.png")));
+  _LoadTexture(wabbitTexture, wabbitTexturePath);
+  const wabbitDim_w = get_Texture_width(wabbitTexture);
+  const wabbitDim_h = get_Texture_height(wabbitTexture);
+
+  // Create more bunnies on spacebar or mouse click
+  const createBunnies = (requested: number): void => {
+    const count = (bunniesCount + requested < MAX_BUNNIES) ? requested : MAX_BUNNIES - bunniesCount; 
+    for (let i = 0; i < count; i++)
+    {
+      if (bunniesCount < MAX_BUNNIES)
+      {
+        bunnies.push(new Bunny(
+          width/2,
+          height/2,
+          _GetRandomValue(-250, 250)/60,
+          _GetRandomValue(-250, 250)/60,
+          makeColor(_GetRandomValue(50, 240), _GetRandomValue(80, 240), _GetRandomValue(100, 240), 255)));
+        bunniesCount++;
+      }
+    }
+  }
+
+  // Main game loop
   while (!_WindowShouldClose())
   {
-    // Update
-    if (_IsMouseButtonDown(_MOUSE_BUTTON_LEFT))
+    // Update Input
+    if (_IsKeyPressed(_KEY_SPACE))
     {
-        // Create more bunnies
-        for (let i = 0; i < 100; i++)
-        {
-          if (bunniesCount < MAX_BUNNIES)
-          {
-            _GetMousePosition(bunnyBridge.pos);
-            bunnies_pos_x.push(get_Vector2_x(bunnyBridge.pos));
-            bunnies_pos_y.push(get_Vector2_y(bunnyBridge.pos));
-            bunnies_speed_x.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-            bunnies_speed_y.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-            bunnies_color_r.push(Math.floor(Math.random() * (240 - 50 + 1)) + 50);
-            bunnies_color_g.push(Math.floor(Math.random() * (240 - 80 + 1)) + 80);
-            bunnies_color_b.push(Math.floor(Math.random() * (240 - 100 + 1)) + 100);
-            bunnies_color_a.push(255);
-            bunniesCount++;
-          }
-        }
+      createBunnies(MAX_BUNNIES);
+    }
+    else if (_IsMouseButtonDown(_MOUSE_BUTTON_LEFT))
+    {
+      createBunnies(100);
     }
 
     // Update bunnies speed and position
     for (let i = 0; i < bunniesCount; i++)
     {
-        bunnies_pos_x[i] += bunnies_speed_x[i];
-        bunnies_pos_y[i] += bunnies_speed_y[i];
+      let bunny: Bunny = bunnies[i];
+      bunny.pos_x += bunny.speed_x;
+      bunny.pos_y += bunny.speed_y;
 
-        if (((bunnies_pos_x[i] + wabbitDim.w/2) > width) || ((bunnies_pos_x[i] + wabbitDim.w/2) < 0)) bunnies_speed_x[i] *= -1;
-        if (((bunnies_pos_y[i] + wabbitDim.h/2) > height) || ((bunnies_pos_y[i] + wabbitDim.h/2 - 40) < 0)) bunnies_speed_y[i] *= -1;
+      if (((bunny.pos_x + wabbitDim_w/2) > width) || ((bunny.pos_x + wabbitDim_w/2) < 0)) bunny.speed_x *= -1;
+      if (((bunny.pos_y + wabbitDim_h/2) > height) || ((bunny.pos_y + wabbitDim_h/2 - 40) < 0)) bunny.speed_y *= -1;
     }
 
-    // Draw
-      _BeginDrawing();
+    // Draw scene
+    _BeginDrawing();
 
-        _ClearBackground(RAYWHITE);
-        for (let i = 0; i < bunniesCount; i++)
-        {
-            set_Color_r(bunnyBridge.color, bunnies_color_r[i]);
-            set_Color_g(bunnyBridge.color, bunnies_color_g[i]);
-            set_Color_b(bunnyBridge.color, bunnies_color_b[i]);
-            set_Color_a(bunnyBridge.color, bunnies_color_a[i]);
-            _DrawTexture(wabbitTexture, Math.floor(bunnies_pos_x[i]), Math.floor(bunnies_pos_y[i]), bunnyBridge.color);
-        }
+      _ClearBackground(RAYWHITE);
+      for (let i = 0; i < bunniesCount; i++)
+      {
+        let bunny: Bunny = bunnies[i];
+        _sh_ptr_write_c_uint(bunnyColor, 0, bunny.color);
+        _DrawTexture(wabbitTexture, bunny.pos_x, bunny.pos_y, bunnyColor);
+      }
 
-        _DrawRectangle(0, 0, width, 40, BLACK);
-        
-        copyToAsciiz(`bunnies: ${bunniesCount}`, bunniesText, 256);
-        _DrawText(bunniesText, 120, 10, 20, GREEN);
+      _DrawRectangle(0, 0, width, 40, BLACK);
 
-        copyToAsciiz(`batched draw calls: ${1 + Math.floor(bunniesCount/MAX_BATCH_ELEMENTS)}`, batchedText, 256);
-        _DrawText(batchedText, 320, 10, 20, MAROON);
+      copyToAsciiz(`bunnies: ${bunniesCount}`, bunnyCountText, 256);
+      _DrawText(bunnyCountText, 120, 10, 20, GREEN);
 
-        _DrawFPS(10, 10);
+      copyToAsciiz(`batched draw calls: ${1 + Math.floor(bunniesCount/MAX_BATCH_ELEMENTS)}`, batchedDrawsText, 256);
+      _DrawText(batchedDrawsText, 320, 10, 20, MAROON);
 
-      _EndDrawing();
+      _DrawFPS(10, 10);
+
+    _EndDrawing();
   }
 
+  // Unload bunny texture
   _UnloadTexture(wabbitTexture);
 
+  // Free memory
   mem.release();
 
+  // ✌️
   _CloseWindow();
 })();
