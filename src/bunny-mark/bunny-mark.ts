@@ -18,50 +18,52 @@
     };
   })();
 
+  /// Pack color channels into a 32-bit unsigned integer.
+  function makeColor(r: number, g: number, b: number, a: number): number {
+    "inline";
+    return (a << 24) | (b << 16) | (g << 8) | r;
+  }
+
   // Constants
-  const RAYWHITE = mem.alloc(_sizeof_Color); set_Color_r(RAYWHITE, 245); set_Color_g(RAYWHITE, 245); set_Color_b(RAYWHITE, 245); set_Color_a(RAYWHITE, 255);
-  const BLACK = mem.alloc(_sizeof_Color); set_Color_r(BLACK, 0); set_Color_g(BLACK, 0); set_Color_b(BLACK, 0); set_Color_a(BLACK, 255);
-  const GREEN = mem.alloc(_sizeof_Color); set_Color_r(GREEN, 0); set_Color_g(GREEN, 255); set_Color_b(GREEN, 0); set_Color_a(GREEN, 255);
-  const MAROON = mem.alloc(_sizeof_Color); set_Color_r(MAROON, 190); set_Color_g(MAROON, 33); set_Color_b(MAROON, 55); set_Color_a(MAROON, 255);
+  const RAYWHITE: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(RAYWHITE, 245); set_Color_g(RAYWHITE, 245); set_Color_b(RAYWHITE, 245); set_Color_a(RAYWHITE, 255);
+  const BLACK: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(BLACK, 0); set_Color_g(BLACK, 0); set_Color_b(BLACK, 0); set_Color_a(BLACK, 255);
+  const GREEN: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(GREEN, 0); set_Color_g(GREEN, 255); set_Color_b(GREEN, 0); set_Color_a(GREEN, 255);
+  const MAROON: c_ptr = mem.alloc(_sizeof_Color); set_Color_r(MAROON, 190); set_Color_g(MAROON, 33); set_Color_b(MAROON, 55); set_Color_a(MAROON, 255);
   const MAX_BUNNIES = 100000;
   const MAX_BATCH_ELEMENTS = 8192;
 
   // Bunny buffers
   let bunniesCount = 0;
-  const bunnyBridge = {
-    pos: mem.alloc(_sizeof_Vector2),
-    color: mem.alloc(_sizeof_Color),
-  };
+  const bunnyBridge_pos: c_ptr = mem.alloc(_sizeof_Vector2);
+  const bunnyBridge_color: c_ptr = mem.alloc(_sizeof_Color);
 
   // TODO: Unsupported ObjectTypeAnnotation
   //const bunnies: { pos: { x: number, y: number }, speed: { x: number, y: number }, color: {r: number, g: number, b: number, a: number} }[] = [];
 
   // TODO: new Array(MAX_BUNNIES) causes a runtime assertion when assigning the elements of the array
-  const bunnies_pos_x: number[] = []; 
+  const bunnies_pos_x: number[] = [];
   const bunnies_pos_y: number[] = [];
   const bunnies_speed_x: number[] = [];
   const bunnies_speed_y: number[] = [];
-  const bunnies_color_r: number[] = [];
-  const bunnies_color_g: number[] = [];
-  const bunnies_color_b: number[] = [];
-  const bunnies_color_a: number[] = [];
+  const bunnies_color: number[] = [];
 
   // Initialization
   const width = 640, height = 480;
   const title = mem.alloc("raylib - bunny mark");
   _InitWindow(width, height, title);
-  
-  const wabbitTexture = mem.alloc(_sizeof_Texture);
+
+  const wabbitTexture: c_ptr = mem.alloc(_sizeof_Texture);
   const wabbitTexturePath = mem.pin(get_resource_path(mem.alloc("wabbit_alpha.png")));
-  const wabbitDim = { w: 0, h: 0 };
+  var wabbitDim_w = 0;
+  var wabbitDim_h = 0;
 
   const bunniesText = mem.alloc(256);
   const batchedText = mem.alloc(256);
-  
+
   _LoadTexture(wabbitTexture, wabbitTexturePath);
-  wabbitDim.w = get_Texture_width(wabbitTexture);
-  wabbitDim.h = get_Texture_height(wabbitTexture);
-  
+  wabbitDim_w = get_Texture_width(wabbitTexture);
+  wabbitDim_h = get_Texture_height(wabbitTexture);
+
   _SetTargetFPS(144);
 
   // Create more bunnies
@@ -73,10 +75,10 @@
       bunnies_pos_y.push(height/2);
       bunnies_speed_x.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
       bunnies_speed_y.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-      bunnies_color_r.push(Math.floor(Math.random() * (240 - 50 + 1)) + 50);
-      bunnies_color_g.push(Math.floor(Math.random() * (240 - 80 + 1)) + 80);
-      bunnies_color_b.push(Math.floor(Math.random() * (240 - 100 + 1)) + 100);
-      bunnies_color_a.push(255);
+      bunnies_color.push(makeColor(Math.floor(Math.random() * (240 - 50 + 1)) + 50,
+          Math.floor(Math.random() * (240 - 80 + 1)) + 80,
+          Math.floor(Math.random() * (240 - 100 + 1)) + 100,
+          255));
       bunniesCount++;
     }
   }
@@ -91,8 +93,8 @@
         bunnies_pos_x[i] += bunnies_speed_x[i];
         bunnies_pos_y[i] += bunnies_speed_y[i];
 
-        if (((bunnies_pos_x[i] + wabbitDim.w/2) > width) || ((bunnies_pos_x[i] + wabbitDim.w/2) < 0)) bunnies_speed_x[i] *= -1;
-        if (((bunnies_pos_y[i] + wabbitDim.h/2) > height) || ((bunnies_pos_y[i] + wabbitDim.h/2 - 40) < 0)) bunnies_speed_y[i] *= -1;
+        if (((bunnies_pos_x[i] + wabbitDim_w/2) > width) || ((bunnies_pos_x[i] + wabbitDim_w/2) < 0)) bunnies_speed_x[i] *= -1;
+        if (((bunnies_pos_y[i] + wabbitDim_h/2) > height) || ((bunnies_pos_y[i] + wabbitDim_h/2 - 40) < 0)) bunnies_speed_y[i] *= -1;
     }
 
     // Draw
@@ -101,15 +103,12 @@
         _ClearBackground(RAYWHITE);
         for (let i = 0; i < bunniesCount; i++)
         {
-            set_Color_r(bunnyBridge.color, bunnies_color_r[i]);
-            set_Color_g(bunnyBridge.color, bunnies_color_g[i]);
-            set_Color_b(bunnyBridge.color, bunnies_color_b[i]);
-            set_Color_a(bunnyBridge.color, bunnies_color_a[i]);
-            _DrawTexture(wabbitTexture, Math.floor(bunnies_pos_x[i]), Math.floor(bunnies_pos_y[i]), bunnyBridge.color);
+            _sh_ptr_write_c_uint(bunnyBridge_color, 0, bunnies_color[i]);
+            _DrawTexture(wabbitTexture, bunnies_pos_x[i], bunnies_pos_y[i], bunnyBridge_color);
         }
 
         _DrawRectangle(0, 0, width, 40, BLACK);
-        
+
         copyToAsciiz(`bunnies: ${bunniesCount}`, bunniesText, 256);
         _DrawText(bunniesText, 120, 10, 20, GREEN);
 
