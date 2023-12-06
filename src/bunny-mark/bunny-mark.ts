@@ -37,15 +37,26 @@
   const bunnyBridge_pos: c_ptr = mem.alloc(_sizeof_Vector2);
   const bunnyBridge_color: c_ptr = mem.alloc(_sizeof_Color);
 
+  class Bunny {
+    pos_x: number;
+    pos_y: number;
+    speed_x: number;
+    speed_y: number;
+    color: number;
+
+    constructor(pos_x: number, pos_y: number, speed_x: number, speed_y: number, color: number) {
+        this.pos_x = pos_x;
+        this.pos_y = pos_y;
+        this.speed_x = speed_x;
+        this.speed_y = speed_y;
+        this.color = color;
+    }
+  }
   // TODO: Unsupported ObjectTypeAnnotation
   //const bunnies: { pos: { x: number, y: number }, speed: { x: number, y: number }, color: {r: number, g: number, b: number, a: number} }[] = [];
 
   // TODO: new Array(MAX_BUNNIES) causes a runtime assertion when assigning the elements of the array
-  const bunnies_pos_x: number[] = [];
-  const bunnies_pos_y: number[] = [];
-  const bunnies_speed_x: number[] = [];
-  const bunnies_speed_y: number[] = [];
-  const bunnies_color: number[] = [];
+  const bunnies: Bunny[] = [];
 
   // Initialization
   const width = 640, height = 480;
@@ -71,14 +82,15 @@
   {
     if (bunniesCount < MAX_BUNNIES)
     {
-      bunnies_pos_x.push(width/2);
-      bunnies_pos_y.push(height/2);
-      bunnies_speed_x.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-      bunnies_speed_y.push((Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60);
-      bunnies_color.push(makeColor(Math.floor(Math.random() * (240 - 50 + 1)) + 50,
-          Math.floor(Math.random() * (240 - 80 + 1)) + 80,
-          Math.floor(Math.random() * (240 - 100 + 1)) + 100,
-          255));
+      bunnies.push( new Bunny(
+          width/2,
+          height/2,
+          (Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60,
+          (Math.floor(Math.random() * (250 - -250 + 1)) + -250) / 60,
+          makeColor(Math.floor(Math.random() * (240 - 50 + 1)) + 50,
+            Math.floor(Math.random() * (240 - 80 + 1)) + 80,
+            Math.floor(Math.random() * (240 - 100 + 1)) + 100,
+            255)));
       bunniesCount++;
     }
   }
@@ -90,11 +102,12 @@
     // Update bunnies speed and position
     for (let i = 0; i < bunniesCount; i++)
     {
-        bunnies_pos_x[i] += bunnies_speed_x[i];
-        bunnies_pos_y[i] += bunnies_speed_y[i];
+        let bunny: Bunny = bunnies[i];
+        bunny.pos_x += bunny.speed_x;
+        bunny.pos_y += bunny.speed_y;
 
-        if (((bunnies_pos_x[i] + wabbitDim_w/2) > width) || ((bunnies_pos_x[i] + wabbitDim_w/2) < 0)) bunnies_speed_x[i] *= -1;
-        if (((bunnies_pos_y[i] + wabbitDim_h/2) > height) || ((bunnies_pos_y[i] + wabbitDim_h/2 - 40) < 0)) bunnies_speed_y[i] *= -1;
+        if (((bunny.pos_x + wabbitDim_w/2) > width) || ((bunny.pos_x + wabbitDim_w/2) < 0)) bunny.speed_x *= -1;
+        if (((bunny.pos_y + wabbitDim_h/2) > height) || ((bunny.pos_y + wabbitDim_h/2 - 40) < 0)) bunny.speed_y *= -1;
     }
 
     // Draw
@@ -103,8 +116,9 @@
         _ClearBackground(RAYWHITE);
         for (let i = 0; i < bunniesCount; i++)
         {
-            _sh_ptr_write_c_uint(bunnyBridge_color, 0, bunnies_color[i]);
-            _DrawTexture(wabbitTexture, bunnies_pos_x[i], bunnies_pos_y[i], bunnyBridge_color);
+            let bunny: Bunny = bunnies[i];
+            _sh_ptr_write_c_uint(bunnyBridge_color, 0, bunny.color);
+            _DrawTexture(wabbitTexture, bunny.pos_x, bunny.pos_y, bunnyBridge_color);
         }
 
         _DrawRectangle(0, 0, width, 40, BLACK);
