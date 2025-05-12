@@ -23,6 +23,6 @@ add_dependencies(hello-world shermes shared)
 target_include_directories(hello-world PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../shared)
 target_link_directories(hello-world PRIVATE ${hermes_BINARY_DIR}/lib)
 
-target_link_libraries(hello-world hermesvm raylib)
+target_link_libraries(hello-world hermesvm shermes_console raylib)
 
 
